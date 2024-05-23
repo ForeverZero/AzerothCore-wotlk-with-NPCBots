@@ -12435,59 +12435,61 @@ bool bot_ai::_unequip(uint8 slot, ObjectGuid receiver)
     uint32 itemId = item->GetEntry();
 
     _removeEquipment(slot);
+    item->DestroyForPlayer(master);
+    delete item;
 
     //hand old weapon to master
-    if (receiver && (slot > BOT_SLOT_RANGED || einfo->ItemEntry[slot] != itemId))
-    {
-        if (receiver == master->GetGUID())
-        {
-            ItemPosCountVec dest;
-            uint32 no_space = 0;
-            InventoryResult msg = master->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, 1, &no_space);
-            if (msg != EQUIP_ERR_OK)
-            {
-                std::ostringstream istr;
-                _AddItemLink(master, item, istr, false);
-                ChatHandler ch(master->GetSession());
-                ch.PSendSysMessage(LocalizedNpcText(master, BOT_TEXT_CANT_UNEQUIP_MAILING).c_str(), istr.str().c_str());
+    //if (receiver && (slot > BOT_SLOT_RANGED || einfo->ItemEntry[slot] != itemId))
+    //{
+    //    if (receiver == master->GetGUID())
+    //    {
+    //        ItemPosCountVec dest;
+    //        uint32 no_space = 0;
+    //        InventoryResult msg = master->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, 1, &no_space);
+    //        if (msg != EQUIP_ERR_OK)
+    //        {
+    //            std::ostringstream istr;
+    //            _AddItemLink(master, item, istr, false);
+    //            ChatHandler ch(master->GetSession());
+    //            ch.PSendSysMessage(LocalizedNpcText(master, BOT_TEXT_CANT_UNEQUIP_MAILING).c_str(), istr.str().c_str());
 
-                item->SetOwnerGUID(master->GetGUID());
+    //            item->SetOwnerGUID(master->GetGUID());
 
-                CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-                item->FSetState(ITEM_CHANGED);
-                item->SaveToDB(trans);
-                MailDraft(istr.str(), "").AddItem(item).SendMailTo(trans, MailReceiver(master), MailSender(me));
-                CharacterDatabase.CommitTransaction(trans);
+    //            CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+    //            item->FSetState(ITEM_CHANGED);
+    //            item->SaveToDB(trans);
+    //            MailDraft(istr.str(), "").AddItem(item).SendMailTo(trans, MailReceiver(master), MailSender(me));
+    //            CharacterDatabase.CommitTransaction(trans);
 
-                //master->SendEquipError(msg, nullptr, nullptr, itemId);
-                //return false;
-            }
-            else
-            {
-                Item* pItem = master->StoreItem(dest, item, true);
-                master->SendNewItem(pItem, 1, true, false, false);
-            }
-        }
-        else
-        {
-            item->SetOwnerGUID(receiver);
+    //            //master->SendEquipError(msg, nullptr, nullptr, itemId);
+    //            //return false;
+    //        }
+    //        else
+    //        {
+    //            Item* pItem = master->StoreItem(dest, item, true);
+    //            master->SendNewItem(pItem, 1, true, false, false);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        item->SetOwnerGUID(receiver);
 
-            CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-            item->FSetState(ITEM_CHANGED);
-            item->SaveToDB(trans);
-            static const std::string subject = LocalizedNpcText(nullptr, BOT_TEXT_OWNERSHIP_EXPIRED);
-            MailDraft(subject, "").AddItem(item).SendMailTo(trans, MailReceiver(receiver.GetCounter()), MailSender(me));
-            CharacterDatabase.CommitTransaction(trans);
-        }
-    }
-    else
-    {
-        //slot < BOT_SLOT_RANGED && einfo->ItemEntry[slot] == itemId
-        //we have our standard weapon which we should get rid of
-        //item->SetState(ITEM_REMOVED, master); //delete Item object
-        delete item; //!Invalidated!
-        //item = nullptr; //already in "_updateEquips(slot, nullptr);"
-    }
+    //        CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+    //        item->FSetState(ITEM_CHANGED);
+    //        item->SaveToDB(trans);
+    //        static const std::string subject = LocalizedNpcText(nullptr, BOT_TEXT_OWNERSHIP_EXPIRED);
+    //        MailDraft(subject, "").AddItem(item).SendMailTo(trans, MailReceiver(receiver.GetCounter()), MailSender(me));
+    //        CharacterDatabase.CommitTransaction(trans);
+    //    }
+    //}
+    //else
+    //{
+    //    //slot < BOT_SLOT_RANGED && einfo->ItemEntry[slot] == itemId
+    //    //we have our standard weapon which we should get rid of
+    //    //item->SetState(ITEM_REMOVED, master); //delete Item object
+    //    delete item; //!Invalidated!
+    //    //item = nullptr; //already in "_updateEquips(slot, nullptr);"
+    //}
 
     if (slot <= BOT_SLOT_RANGED && CanChangeEquip(slot)) //weapons
     {

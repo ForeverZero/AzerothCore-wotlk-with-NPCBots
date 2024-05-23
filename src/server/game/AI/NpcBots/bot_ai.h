@@ -351,6 +351,10 @@ class bot_ai : public CreatureAI
 
         static bool IsFlagCarrier(Unit const* unit, BattlegroundTypeId bgTypeId = BATTLEGROUND_TYPE_NONE);
 
+        bool Equip(uint8 slot, Item* newItem, ObjectGuid receiver)
+        {
+            return _equip(slot, newItem, receiver);
+        }
     protected:
         explicit bot_ai(Creature* creature);
 
